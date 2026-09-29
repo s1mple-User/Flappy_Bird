@@ -1,29 +1,72 @@
-cat << 'EOF' > web/index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Flappy Bird Go</title>
-  <script src="wasm_exec.js"></script>
-  <script>
-    const go = new Go();
-    WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
-      go.run(result.instance);
-    });
-  </script>
+  <title>Go Wasm Check</title>
   <style>
     body {
-      margin: 0;
-      background-color: #000;
+      background-color: #121212;
+      color: #fff;
+      font-family: sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       height: 100vh;
-      overflow: hidden;
+      margin: 0;
+    }
+    #status {
+      padding: 10px 20px;
+      border-radius: 5px;
+      background-color: #333;
     }
   </style>
 </head>
 <body>
+
+  <div id="status">Checking WebAssembly status...</div>
+
+  <!-- 1. Load the Go JS runtime bridge -->
+  <script src="wasm_exec.js"></script>
+
+  <!-- 2. Check Wasm availability and load binary -->
+  <script>
+    const statusDiv = document.getElementById("status");
+
+    // CHECK 1: Browser WebAssembly Support
+    if (typeof WebAssembly !== "object") {
+      statusDiv.textContent = "❌ WebAssembly is NOT supported in this browser.";
+      statusDiv.style.backgroundColor = "#721c24";
+    } else {
+      console.log("✅ WebAssembly API is supported by browser.");
+      loadWasm();
+    }
+
+    // CHECK 2: Loading & Instantiating the Binary
+    function loadWasm() {
+      const go = new Go();
+
+      statusDiv.textContent = "Loading WebAssembly binary...";
+
+      WebAssembly.instantiateStreaming(fetch("game.wasm"), go.importObject)
+        .then((result) => {
+          // Success Callback
+          statusDiv.textContent = "✅ WebAssembly Connected & Running!";
+          statusDiv.style.backgroundColor = "#155724";
+
+          // Hide status box after 2 seconds once the game starts
+          setTimeout(() => { statusDiv.style.display = "none"; }, 2000);
+
+          // Start Go engine
+          go.run(result.instance);
+        })
+        .catch((err) => {
+          // Failure Callback
+          console.error("Wasm Error:", err);
+          statusDiv.textContent = "❌ Failed to connect to WebAssembly (Check console)";
+          statusDiv.style.backgroundColor = "#721c24";
+        });
+    }
+  </script>
 </body>
 </html>
-EOF
